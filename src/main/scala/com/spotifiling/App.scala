@@ -16,8 +16,7 @@ object App extends IOApp {
     val program =
       for {
         config <- Stream.eval(IO(AppConfig.get))
-        (source, target) <-
-          Stream.eval(TextExtractor.readSourceTargetPaths(args))
+        (source, target) <- Stream.eval(TextExtractor.readSourceTargetPaths(args))
         _ <- readWords(source)
           .collect(extractValuesWithPattern())
           .through(write(target))

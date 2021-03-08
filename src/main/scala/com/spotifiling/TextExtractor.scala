@@ -39,11 +39,11 @@ object TextExtractor extends StrictLogging {
 
   def extractValuesWithPattern(
       pattern: UnanchoredRegex = spotifyTrackIdPattern
-  ): PartialFunction[String, String] = {
-    case pattern(url) => url
+  ): PartialFunction[String, String] = { case pattern(url) =>
+    url
   }
 
-  def readSourceTargetPaths(args: List[String]): IO[(Path, Path)] = {
+  def readSourceTargetPaths(args: List[String]): IO[(Path, Path)] =
     args match {
       case origin :: destination :: Nil =>
         IO((Paths.get(origin), Paths.get(destination)))
@@ -54,5 +54,4 @@ object TextExtractor extends StrictLogging {
           )
         )
     }
-  }
 }
