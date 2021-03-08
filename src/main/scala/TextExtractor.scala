@@ -17,7 +17,7 @@ object Main extends IOApp {
 
     val program = {
       for {
-        (source, target) <- readSourceTargetPaths(args)
+        (source, target) <- Stream.eval(readSourceTargetPaths(args))
         _ <- readWords(source)
           .collect(extractValuesWithPattern(spotifyTrackPattern))
           .through(write(target))
@@ -27,16 +27,14 @@ object Main extends IOApp {
     program.compile.drain.map(_ => ExitCode.Success)
   }
 
-  def readSourceTargetPaths(args: List[String]): Stream[IO, (Path, Path)] = {
+  def readSourceTargetPaths(args: List[String]): IO[(Path, Path)] = {
     args match {
       case origin :: destination :: Nil =>
-        Stream.eval(IO((Paths.get(origin), Paths.get(destination))))
+        IO((Paths.get(origin), Paths.get(destination)))
       case _ =>
-        Stream.eval(
-          IO.raiseError(
-            new IllegalArgumentException(
-              s"Need two arguments - source and target paths - but received ${args.mkString(" ")}"
-            )
+        IO.raiseError(
+          new IllegalArgumentException(
+            s"Need two arguments - source and target paths - but received ${args.mkString(" ")}"
           )
         )
     }
@@ -55,7 +53,7 @@ object TextExtractor extends StrictLogging {
     readAll[IO](source, blocker, 4096)
       .through(text.utf8Decode)
       .through(text.lines)
-      .flatMap(line => Stream.apply(line.split("""\s+"""): _*))
+      .flatMap(line => Stream.emits(line.split("""\s+""")))
 
   def write[F[_]](target: Path)(implicit
       c: ContextShift[F],

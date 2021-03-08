@@ -18,19 +18,15 @@ class TextExtractorSpec extends AnyFlatSpec {
 
     val result = Main
       .readSourceTargetPaths(List(origin, destination))
-      .compile
-      .last
       .unsafeRunSync()
 
-    assert(result === Some(Paths.get(origin), Paths.get(destination)))
+    assert(result === (Paths.get(origin), Paths.get(destination)))
   }
 
   "Parsing no arguments" should "throw an error" in {
 
     val result = Main
       .readSourceTargetPaths(List.empty)
-      .compile
-      .last
 
     assertThrows[IllegalArgumentException](result.unsafeRunSync())
   }
