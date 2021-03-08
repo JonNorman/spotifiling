@@ -11,6 +11,10 @@ object Dependencies {
     "com.typesafe.scala-logging" %% "scala-logging" % Versions.typesafeLogging
   )
 
+  lazy val pureConfig = Seq(
+    "com.github.pureconfig" %% "pureconfig" % Versions.pureConfig
+  )
+
   lazy val catsEffect = Seq(
     "org.typelevel" %% "cats-effect" % Versions.catsEffect withSources () withJavadoc ()
   )
@@ -24,6 +28,7 @@ object Dependencies {
     val scalaTest = "3.2.2"
     val logback = "1.2.3"
     val typesafeLogging = "3.9.2"
+    val pureConfig = "0.14.1"
     val catsEffect = "2.2.0"
     val fs2 = "2.5.3"
   }

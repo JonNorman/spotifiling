@@ -1,9 +1,10 @@
 package com.spotifiling
 
 import cats.effect.{Blocker, ExitCode, IO, IOApp}
+import com.spotifiling.config.AppConfig
 import fs2.Stream
 
-object Main extends IOApp {
+object App extends IOApp {
 
   import TextExtractor._
 
@@ -14,6 +15,7 @@ object Main extends IOApp {
 
     val program =
       for {
+        config <- Stream.eval(IO(AppConfig.get))
         (source, target) <-
           Stream.eval(TextExtractor.readSourceTargetPaths(args))
         _ <- readWords(source)

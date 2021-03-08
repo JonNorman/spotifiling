@@ -50,7 +50,7 @@ object TextExtractor extends StrictLogging {
       case _ =>
         IO.raiseError(
           new IllegalArgumentException(
-            s"Need two arguments - source and target paths - but received ${args.mkString(" ")}"
+            s"Need two arguments - source and target paths - but received [${args.mkString(" ")}]"
           )
         )
     }

@@ -9,7 +9,7 @@ ThisBuild / organizationName := "spotifiling"
 lazy val root = (project in file("."))
   .settings(
     name := "spotifiling",
-    libraryDependencies ++= catsEffect ++ fs2 ++ logging ++ scalaTest,
+    libraryDependencies ++= catsEffect ++ fs2 ++ logging ++ pureConfig ++ scalaTest,
     scalacOptions ++= Seq(
       "-feature",
       "-deprecation",
