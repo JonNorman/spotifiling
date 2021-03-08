@@ -19,7 +19,7 @@ object Main extends IOApp {
       for {
         (source, target) <- Stream.eval(readSourceTargetPaths(args))
         _ <- readWords(source)
-          .collect(extractValuesWithPattern(spotifyTrackPattern))
+          .collect(extractValuesWithPattern(spotifyTrackIdPattern))
           .through(write(target))
       } yield ()
     }
@@ -40,8 +40,8 @@ object Main extends IOApp {
     }
   }
 
-  val spotifyTrackPattern: UnanchoredRegex =
-    ".*(https://open.spotify.com/track/[a-zA-Z0-9]*).*".r.unanchored
+  val spotifyTrackIdPattern: UnanchoredRegex =
+    ".*https://open.spotify.com/track/([a-zA-Z0-9]*).*".r.unanchored
 }
 
 object TextExtractor extends StrictLogging {
