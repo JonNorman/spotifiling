@@ -1,3 +1,5 @@
+package com.spotifiling
+
 import cats.effect.{Blocker, ContextShift, IO}
 import fs2.Stream
 import org.scalatest.flatspec.AnyFlatSpec
@@ -16,7 +18,7 @@ class TextExtractorSpec extends AnyFlatSpec {
     val origin = "/path/to/input.txt"
     val destination = "/path/to/output.txt"
 
-    val result = Main
+    val result = TextExtractor
       .readSourceTargetPaths(List(origin, destination))
       .unsafeRunSync()
 
@@ -25,7 +27,7 @@ class TextExtractorSpec extends AnyFlatSpec {
 
   "Parsing no arguments" should "throw an error" in {
 
-    val result = Main
+    val result = TextExtractor
       .readSourceTargetPaths(List.empty)
 
     assertThrows[IllegalArgumentException](result.unsafeRunSync())
@@ -65,7 +67,7 @@ class TextExtractorSpec extends AnyFlatSpec {
 
     val result = inputs
       .collect(
-        TextExtractor.extractValuesWithPattern(Main.spotifyTrackIdPattern)
+        TextExtractor.extractValuesWithPattern()
       )
       .compile
       .toList
