@@ -1,0 +1,3 @@
+some words that
+each    should be
+an     element           in the    stream.
