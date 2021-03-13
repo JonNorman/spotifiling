@@ -12,7 +12,8 @@ object Dependencies {
   )
 
   lazy val pureConfig = Seq(
-    "com.github.pureconfig" %% "pureconfig" % Versions.pureConfig
+    "com.github.pureconfig" %% "pureconfig" % Versions.pureConfig,
+    "com.github.pureconfig" %% "pureconfig-cats-effect" % Versions.pureConfig
   )
 
   lazy val catsEffect = Seq(

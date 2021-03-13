@@ -1,4 +1,4 @@
 target/
 .bsp/
 .idea/
-application.secrets
+secrets.conf
