@@ -10,11 +10,23 @@ import scala.util.matching.UnanchoredRegex
 
 object TextExtractor extends StrictLogging {
 
-  def readWords(source: Path)(implicit
-      c: ContextShift[IO],
+  def run[F[_]](source: Path, target: Path)(implicit
+      cs: ContextShift[F],
+      blocker: Blocker,
+      sync: Sync[F]
+  ): Stream[F, Unit] =
+    for {
+      _ <- readWords(source)
+        .collect(extractValuesWithPattern())
+        .through(write(target))
+    } yield ()
+
+  def readWords[F[_]](source: Path)(implicit
+      c: ContextShift[F],
+      sync: Sync[F],
       blocker: Blocker
-  ): Stream[IO, String] =
-    readAll[IO](source, blocker, 4096)
+  ): Stream[F, String] =
+    readAll[F](source, blocker, 4096)
       .through(text.utf8Decode)
       .through(text.lines)
       .flatMap(line => Stream.emits(line.split("""\s+""")))
@@ -42,16 +54,4 @@ object TextExtractor extends StrictLogging {
   ): PartialFunction[String, String] = { case pattern(url) =>
     url
   }
-
-  def readSourceTargetPaths(args: List[String]): IO[(Path, Path)] =
-    args match {
-      case origin :: destination :: Nil =>
-        IO((Paths.get(origin), Paths.get(destination)))
-      case _ =>
-        IO.raiseError(
-          new IllegalArgumentException(
-            s"Need two arguments - source and target paths - but received [${args.mkString(" ")}]"
-          )
-        )
-    }
 }

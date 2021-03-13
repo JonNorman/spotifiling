@@ -13,26 +13,6 @@ class TextExtractorSpec extends AnyFlatSpec {
   private implicit val cs: ContextShift[IO] = IO.contextShift(ec)
   private implicit val blocker: Blocker = Blocker.liftExecutionContext(ec)
 
-  "Parsing two paths as arguments" should "product two valid Paths" in {
-
-    val origin = "/path/to/input.txt"
-    val destination = "/path/to/output.txt"
-
-    val result = TextExtractor
-      .readSourceTargetPaths(List(origin, destination))
-      .unsafeRunSync()
-
-    assert(result === (Paths.get(origin), Paths.get(destination)))
-  }
-
-  "Parsing no arguments" should "throw an error" in {
-
-    val result = TextExtractor
-      .readSourceTargetPaths(List.empty)
-
-    assertThrows[IllegalArgumentException](result.unsafeRunSync())
-  }
-
   "Reading words from a file" should "produce a stream of words" in {
 
     val stream = TextExtractor.readWords(
