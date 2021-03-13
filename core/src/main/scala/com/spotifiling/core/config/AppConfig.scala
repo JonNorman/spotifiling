@@ -1,14 +1,9 @@
-package com.spotifiling.config
+package com.spotifiling.core.config
 
 import pureconfig._
 import pureconfig.generic.auto._
 
-final case class Spotify(
-    clientId: String,
-    playlistId: String
-)
-
-final case class AppConfig(spotify: Spotify)
+final case class AppConfig()
 
 object AppConfig {
 

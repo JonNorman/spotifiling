@@ -1,4 +1,4 @@
-package com.spotifiling
+package com.spotifiling.core
 
 import cats.effect.{Blocker, ContextShift, IO, Sync}
 import com.typesafe.scalalogging.StrictLogging

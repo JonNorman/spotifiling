@@ -1,7 +1,7 @@
-package com.spotifiling
+package com.spotifiling.core
 
 import cats.effect.{Blocker, ExitCode, IO, IOApp}
-import com.spotifiling.config.AppConfig
+import com.spotifiling.core.config.AppConfig
 import fs2.Stream
 
 object App extends IOApp {

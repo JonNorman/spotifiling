@@ -19,6 +19,12 @@ object Dependencies {
     "org.typelevel" %% "cats-effect" % Versions.catsEffect withSources () withJavadoc ()
   )
 
+  lazy val http4s = Seq(
+    "org.http4s" %% "http4s-dsl",
+    "org.http4s" %% "http4s-blaze-server",
+    "org.http4s" %% "http4s-blaze-client"
+  ).map(_ % Versions.http4s)
+
   lazy val fs2 = Seq(
     "co.fs2" % "fs2-core_2.13",
     "co.fs2" %% "fs2-io"
@@ -31,5 +37,6 @@ object Dependencies {
     val pureConfig = "0.14.1"
     val catsEffect = "2.2.0"
     val fs2 = "2.5.3"
+    val http4s = "0.21.18"
   }
 }
