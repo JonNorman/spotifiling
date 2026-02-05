@@ -5,6 +5,7 @@ import { PlaylistList } from '@/components/PlaylistList'
 import { NewPlaylistDialog } from '@/components/NewPlaylistDialog'
 import { KeyboardHelp } from '@/components/KeyboardHelp'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import { useSpotifyData } from '@/hooks/useSpotifyData'
 import { useSpotifyPlayer } from '@/hooks/useSpotifyPlayer'
 import { useBatchWriter } from '@/hooks/useBatchWriter'
@@ -13,6 +14,7 @@ import type { SpotifyTrack } from '@/lib/spotify/types'
 
 interface FilingScreenProps {
   accessToken: string
+  userId: string
 }
 
 function pickRandomSong(songs: SpotifyTrack[]): SpotifyTrack | null {
@@ -21,8 +23,8 @@ function pickRandomSong(songs: SpotifyTrack[]): SpotifyTrack | null {
   return songs[index]
 }
 
-export function FilingScreen({ accessToken }: FilingScreenProps) {
-  const data = useSpotifyData(accessToken)
+export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
+  const data = useSpotifyData(accessToken, userId)
   const player = useSpotifyPlayer(accessToken)
   const writer = useBatchWriter(accessToken)
 
@@ -94,6 +96,30 @@ export function FilingScreen({ accessToken }: FilingScreenProps) {
     setSelectedPlaylistIds((prev) => new Set([...prev, playlist.id]))
   }, [accessToken, data])
 
+  // Unlike current song
+  const handleUnlike = useCallback(async () => {
+    if (!currentSong) return
+
+    try {
+      const api = new SpotifyApi(accessToken)
+      await api.unlikeSong(currentSong.id)
+
+      // Remove from unfiled and pick next song
+      data.removeFromUnfiled(currentSong.id)
+      setSelectedPlaylistIds(new Set())
+      const nextSong = pickRandomSong(
+        data.unfiledSongs.filter((s) => s.id !== currentSong.id)
+      )
+      setCurrentSong(nextSong)
+
+      toast('Song unliked', {
+        description: `Removed "${currentSong.name}" from your library`,
+      })
+    } catch {
+      toast.error('Failed to unlike song')
+    }
+  }, [currentSong, accessToken, data])
+
   // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -117,18 +143,44 @@ export function FilingScreen({ accessToken }: FilingScreenProps) {
         setShowHelp(true)
         return
       }
+
+      if (e.key.toLowerCase() === 'u') {
+        e.preventDefault()
+        handleUnlike()
+        return
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleNext, player])
+  }, [handleNext, handleUnlike, player])
 
   // Loading state
   if (data.isLoading) {
+    const { loadingProgress } = data
+    const hasProgress = loadingProgress.total > 0
+    const percent = hasProgress ? Math.round((loadingProgress.loaded / loadingProgress.total) * 100) : 0
+
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-gray-400">{data.loadingStatus}</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 px-4">
+        <div className="w-full max-w-md space-y-3">
+          <div className="flex justify-between text-sm text-gray-400">
+            <span>{loadingProgress.label}</span>
+            {hasProgress && <span>{percent}%</span>}
+          </div>
+          {hasProgress ? (
+            <Progress value={percent} className="h-2 bg-gray-700" />
+          ) : (
+            <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-full w-1/3 bg-green-500 animate-pulse rounded-full" />
+            </div>
+          )}
+          {hasProgress && (
+            <p className="text-center text-gray-500 text-sm">
+              {loadingProgress.loaded.toLocaleString()} / {loadingProgress.total.toLocaleString()}
+            </p>
+          )}
+        </div>
       </div>
     )
   }
@@ -160,6 +212,30 @@ export function FilingScreen({ accessToken }: FilingScreenProps) {
     ? data.unfiledSongs.filter((s) => s.id !== currentSong.id).length + 1
     : totalUnfiled
 
+  // Find playlists the current song is already in
+  const existingPlaylistIds = new Set<string>()
+  const existingPlaylistNames: string[] = []
+  if (currentSong) {
+    data.playlistTrackIds.forEach((trackIds, playlistId) => {
+      if (trackIds.has(currentSong.id)) {
+        existingPlaylistIds.add(playlistId)
+        const playlist = data.playlists.find((p) => p.id === playlistId)
+        if (playlist) {
+          existingPlaylistNames.push(playlist.name)
+        }
+      }
+    })
+  }
+
+  // Sort playlists: existing ones first, then by filing frequency
+  const sortedPlaylists = [...data.playlists].sort((a, b) => {
+    const aExists = existingPlaylistIds.has(a.id)
+    const bExists = existingPlaylistIds.has(b.id)
+    if (aExists && !bExists) return -1
+    if (!aExists && bExists) return 1
+    return 0 // Maintain existing order (by filing frequency)
+  })
+
   return (
     <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6 px-2 sm:px-0">
       <NowPlaying
@@ -167,6 +243,7 @@ export function FilingScreen({ accessToken }: FilingScreenProps) {
         isPlaying={player.isPlaying}
         position={player.position}
         duration={player.duration}
+        existingPlaylists={existingPlaylistNames}
         onTogglePlay={player.togglePlay}
       />
 
@@ -175,8 +252,9 @@ export function FilingScreen({ accessToken }: FilingScreenProps) {
       </p>
 
       <PlaylistList
-        playlists={data.playlists}
+        playlists={sortedPlaylists}
         selectedIds={selectedPlaylistIds}
+        existingIds={existingPlaylistIds}
         onToggle={handleTogglePlaylist}
         onCreateNew={() => setShowNewPlaylist(true)}
         searchFocusKey="/"
@@ -191,9 +269,14 @@ export function FilingScreen({ accessToken }: FilingScreenProps) {
             <span className="text-red-400 ml-2">{writer.lastError}</span>
           )}
         </div>
-        <Button onClick={handleNext} size="lg">
-          Next (Enter)
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleUnlike} variant="outline" size="lg">
+            Unlike (U)
+          </Button>
+          <Button onClick={handleNext} size="lg">
+            Next (Enter)
+          </Button>
+        </div>
       </div>
 
       <NewPlaylistDialog

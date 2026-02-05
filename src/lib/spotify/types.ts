@@ -16,6 +16,7 @@ export interface SpotifyTrack {
   name: string
   uri: string
   duration_ms: number
+  added_at?: string // ISO date string when added to library
   artists: { id: string; name: string }[]
   album: {
     id: string
@@ -29,6 +30,10 @@ export interface SpotifyPlaylist {
   name: string
   uri: string
   snapshot_id: string
+  owner: {
+    id: string
+  }
+  collaborative: boolean
   tracks: {
     total: number
   }

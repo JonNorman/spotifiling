@@ -9,6 +9,13 @@ import {
   getFilingCounts,
 } from '@/lib/cache'
 
+interface LoadingProgress {
+  phase: 'idle' | 'liked-songs' | 'playlists' | 'computing'
+  loaded: number
+  total: number
+  label: string
+}
+
 interface DataState {
   likedSongs: SpotifyTrack[]
   playlists: SpotifyPlaylist[]
@@ -16,10 +23,11 @@ interface DataState {
   unfiledSongs: SpotifyTrack[]
   isLoading: boolean
   loadingStatus: string
+  loadingProgress: LoadingProgress
   error: string | null
 }
 
-export function useSpotifyData(accessToken: string | null) {
+export function useSpotifyData(accessToken: string | null, userId: string | null) {
   const [state, setState] = useState<DataState>({
     likedSongs: [],
     playlists: [],
@@ -27,16 +35,22 @@ export function useSpotifyData(accessToken: string | null) {
     unfiledSongs: [],
     isLoading: true,
     loadingStatus: 'Initializing...',
+    loadingProgress: { phase: 'idle', loaded: 0, total: 0, label: '' },
     error: null,
   })
 
   const loadData = useCallback(async () => {
-    if (!accessToken) return
+    if (!accessToken || !userId) return
 
     const api = new SpotifyApi(accessToken)
 
     try {
-      setState((s) => ({ ...s, isLoading: true, loadingStatus: 'Checking library...' }))
+      setState((s) => ({
+        ...s,
+        isLoading: true,
+        loadingStatus: 'Checking library...',
+        loadingProgress: { phase: 'idle', loaded: 0, total: 0, label: 'Checking library...' },
+      }))
 
       // Step 1: Get liked songs count for cache validation
       const likedCount = await api.getLikedSongsCount()
@@ -44,19 +58,32 @@ export function useSpotifyData(accessToken: string | null) {
       // Step 2: Load liked songs (from cache or API)
       let likedSongs = await getCachedLikedSongs(likedCount)
       if (!likedSongs) {
-        setState((s) => ({ ...s, loadingStatus: 'Loading liked songs...' }))
+        setState((s) => ({
+          ...s,
+          loadingStatus: 'Loading liked songs...',
+          loadingProgress: { phase: 'liked-songs', loaded: 0, total: likedCount, label: 'Loading liked songs' },
+        }))
         likedSongs = await api.getAllLikedSongs((loaded, total) => {
           setState((s) => ({
             ...s,
             loadingStatus: `Loading liked songs... ${loaded}/${total}`,
+            loadingProgress: { phase: 'liked-songs', loaded, total, label: 'Loading liked songs' },
           }))
         })
         await updateCachedLikedSongs(likedSongs, likedCount)
       }
 
-      // Step 3: Load playlists
-      setState((s) => ({ ...s, loadingStatus: 'Loading playlists...' }))
-      const playlists = await api.getAllPlaylists()
+      // Step 3: Load playlists (only owned or collaborative)
+      setState((s) => ({
+        ...s,
+        loadingStatus: 'Loading playlists...',
+        loadingProgress: { phase: 'playlists', loaded: 0, total: 0, label: 'Loading playlists...' },
+      }))
+      const allPlaylists = await api.getAllPlaylists()
+      // Filter to playlists the user can add tracks to
+      const playlists = allPlaylists.filter(
+        (p) => p.owner.id === userId || p.collaborative
+      )
 
       // Step 4: Load playlist tracks (with smart caching)
       const playlistTrackIds = new Map<string, Set<string>>()
@@ -66,6 +93,12 @@ export function useSpotifyData(accessToken: string | null) {
         setState((s) => ({
           ...s,
           loadingStatus: `Loading playlist ${i + 1}/${playlists.length}: ${playlist.name}`,
+          loadingProgress: {
+            phase: 'playlists',
+            loaded: i,
+            total: playlists.length,
+            label: `Loading playlist: ${playlist.name}`,
+          },
         }))
 
         // Check cache first
@@ -79,7 +112,11 @@ export function useSpotifyData(accessToken: string | null) {
       }
 
       // Step 5: Compute unfiled songs
-      setState((s) => ({ ...s, loadingStatus: 'Computing unfiled songs...' }))
+      setState((s) => ({
+        ...s,
+        loadingStatus: 'Computing unfiled songs...',
+        loadingProgress: { phase: 'computing', loaded: 0, total: 0, label: 'Computing unfiled songs...' },
+      }))
 
       const allFiledTrackIds = new Set<string>()
       playlistTrackIds.forEach((trackIds) => {
@@ -105,6 +142,7 @@ export function useSpotifyData(accessToken: string | null) {
         unfiledSongs,
         isLoading: false,
         loadingStatus: '',
+        loadingProgress: { phase: 'idle', loaded: 0, total: 0, label: '' },
         error: null,
       })
     } catch (err) {
@@ -114,7 +152,7 @@ export function useSpotifyData(accessToken: string | null) {
         error: err instanceof Error ? err.message : 'Failed to load data',
       }))
     }
-  }, [accessToken])
+  }, [accessToken, userId])
 
   useEffect(() => {
     loadData()

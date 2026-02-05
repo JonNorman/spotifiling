@@ -35,7 +35,7 @@ function App() {
       </header>
 
       <main>
-        <FilingScreen accessToken={tokens!.accessToken} />
+        <FilingScreen accessToken={tokens!.accessToken} userId={user!.id} />
       </main>
 
       <Toaster />
