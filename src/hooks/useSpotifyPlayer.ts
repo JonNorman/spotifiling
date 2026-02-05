@@ -33,7 +33,8 @@ export function useSpotifyPlayer(accessToken: string | null) {
         volume: 0.5,
       })
 
-      player.addListener('ready', ({ device_id }: { device_id: string }) => {
+      player.addListener('ready', (state) => {
+        const { device_id } = state as { device_id: string }
         if (isMounted) {
           deviceIdRef.current = device_id
           setState((s) => ({ ...s, isReady: true }))
@@ -47,7 +48,8 @@ export function useSpotifyPlayer(accessToken: string | null) {
         }
       })
 
-      player.addListener('player_state_changed', (playbackState: SpotifyPlaybackState | null) => {
+      player.addListener('player_state_changed', (state) => {
+        const playbackState = state as SpotifyPlaybackState | null
         if (isMounted && playbackState) {
           setState((s) => ({
             ...s,
@@ -58,19 +60,22 @@ export function useSpotifyPlayer(accessToken: string | null) {
         }
       })
 
-      player.addListener('initialization_error', ({ message }: { message: string }) => {
+      player.addListener('initialization_error', (state) => {
+        const { message } = state as { message: string }
         if (isMounted) {
           setState((s) => ({ ...s, error: `Init error: ${message}` }))
         }
       })
 
-      player.addListener('authentication_error', ({ message }: { message: string }) => {
+      player.addListener('authentication_error', (state) => {
+        const { message } = state as { message: string }
         if (isMounted) {
           setState((s) => ({ ...s, error: `Auth error: ${message}` }))
         }
       })
 
-      player.addListener('playback_error', ({ message }: { message: string }) => {
+      player.addListener('playback_error', (state) => {
+        const { message } = state as { message: string }
         if (isMounted) {
           setState((s) => ({ ...s, error: `Playback error: ${message}` }))
         }
