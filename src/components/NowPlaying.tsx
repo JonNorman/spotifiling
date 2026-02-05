@@ -5,6 +5,7 @@ interface NowPlayingProps {
   isPlaying: boolean
   position: number
   duration: number
+  existingPlaylists: string[] // Names of playlists track is already in
   onTogglePlay: () => void
 }
 
@@ -15,11 +16,21 @@ function formatTime(ms: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
+function formatDate(isoDate: string): string {
+  const date = new Date(isoDate)
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
 export function NowPlaying({
   track,
   isPlaying,
   position,
   duration,
+  existingPlaylists,
   onTogglePlay,
 }: NowPlayingProps) {
   if (!track) {
@@ -48,6 +59,17 @@ export function NowPlaying({
           <p className="text-gray-400 truncate">
             {track.artists.map((a) => a.name).join(', ')}
           </p>
+          {track.added_at && (
+            <p className="text-gray-500 text-sm mt-1">
+              Added {formatDate(track.added_at)}
+            </p>
+          )}
+          {existingPlaylists.length > 0 && (
+            <p className="text-gray-500 text-sm mt-1">
+              Already in: {existingPlaylists.slice(0, 3).join(', ')}
+              {existingPlaylists.length > 3 && ` +${existingPlaylists.length - 3} more`}
+            </p>
+          )}
         </div>
       </div>
 

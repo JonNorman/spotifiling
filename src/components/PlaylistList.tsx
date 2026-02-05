@@ -6,6 +6,7 @@ import type { SpotifyPlaylist } from '@/lib/spotify/types'
 interface PlaylistListProps {
   playlists: SpotifyPlaylist[]
   selectedIds: Set<string>
+  existingIds: Set<string> // Playlists the current track is already in
   onToggle: (playlistId: string) => void
   onCreateNew: () => void
   searchFocusKey: string // e.g., '/'
@@ -14,6 +15,7 @@ interface PlaylistListProps {
 export function PlaylistList({
   playlists,
   selectedIds,
+  existingIds,
   onToggle,
   onCreateNew,
   searchFocusKey,
@@ -82,21 +84,29 @@ export function PlaylistList({
       </div>
 
       <div className="space-y-2 max-h-60 sm:max-h-80 overflow-y-auto">
-        {filteredPlaylists.map((playlist, index) => (
-          <label
-            key={playlist.id}
-            className="flex items-center gap-3 p-2 rounded hover:bg-gray-700 cursor-pointer"
-          >
-            <Checkbox
-              checked={selectedIds.has(playlist.id)}
-              onCheckedChange={() => onToggle(playlist.id)}
-            />
-            <span className="text-gray-500 text-sm w-4">
-              {index < 10 ? (index + 1) % 10 : ''}
-            </span>
-            <span className="truncate">{playlist.name}</span>
-          </label>
-        ))}
+        {filteredPlaylists.map((playlist, index) => {
+          const isExisting = existingIds.has(playlist.id)
+          return (
+            <label
+              key={playlist.id}
+              className={`flex items-center gap-3 p-2 rounded hover:bg-gray-700 cursor-pointer ${
+                isExisting ? 'bg-gray-700/50' : ''
+              }`}
+            >
+              <Checkbox
+                checked={selectedIds.has(playlist.id)}
+                onCheckedChange={() => onToggle(playlist.id)}
+              />
+              <span className="text-gray-500 text-sm w-4">
+                {index < 10 ? (index + 1) % 10 : ''}
+              </span>
+              <span className="truncate flex-1">{playlist.name}</span>
+              {isExisting && (
+                <span className="text-xs text-green-500 shrink-0">already in</span>
+              )}
+            </label>
+          )
+        })}
 
         {filteredPlaylists.length === 0 && (
           <p className="text-gray-500 text-center py-4">No playlists found</p>
