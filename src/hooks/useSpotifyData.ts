@@ -42,7 +42,7 @@ export function useSpotifyData(accessToken: string | null) {
       const likedCount = await api.getLikedSongsCount()
 
       // Step 2: Load liked songs (from cache or API)
-      let likedSongs = getCachedLikedSongs(likedCount)
+      let likedSongs = await getCachedLikedSongs(likedCount)
       if (!likedSongs) {
         setState((s) => ({ ...s, loadingStatus: 'Loading liked songs...' }))
         likedSongs = await api.getAllLikedSongs((loaded, total) => {
@@ -51,7 +51,7 @@ export function useSpotifyData(accessToken: string | null) {
             loadingStatus: `Loading liked songs... ${loaded}/${total}`,
           }))
         })
-        updateCachedLikedSongs(likedSongs, likedCount)
+        await updateCachedLikedSongs(likedSongs, likedCount)
       }
 
       // Step 3: Load playlists
@@ -69,10 +69,10 @@ export function useSpotifyData(accessToken: string | null) {
         }))
 
         // Check cache first
-        let trackIds = getCachedPlaylistTracks(playlist.id, playlist.snapshot_id)
+        let trackIds = await getCachedPlaylistTracks(playlist.id, playlist.snapshot_id)
         if (!trackIds) {
           trackIds = await api.getPlaylistTracks(playlist.id)
-          updateCachedPlaylistTracks(playlist.id, trackIds, playlist.snapshot_id)
+          await updateCachedPlaylistTracks(playlist.id, trackIds, playlist.snapshot_id)
         }
 
         playlistTrackIds.set(playlist.id, new Set(trackIds))
