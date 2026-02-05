@@ -50,7 +50,7 @@ npm run dev
 | Variable | Description |
 |----------|-------------|
 | `VITE_SPOTIFY_CLIENT_ID` | Your Spotify app's Client ID |
-| `VITE_SPOTIFY_REDIRECT_URI` | OAuth callback URL (e.g., `http://localhost:5173/callback`) |
+| `VITE_SPOTIFY_REDIRECT_URI` | OAuth callback URL (e.g., `https://localhost:5173/callback`) |
 
 ## Keyboard Shortcuts
 

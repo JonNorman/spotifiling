@@ -26,7 +26,7 @@ Go to https://developer.spotify.com/dashboard and log in with your Spotify accou
 - App name: `Spotifiling`
 - App description: `Organize your Spotify library`
 - Redirect URIs: Add both:
-  - `http://localhost:5173/callback` (local dev)
+  - `https://localhost:5173/callback` (local dev - HTTPS required)
   - `https://your-app.pages.dev/callback` (production - update after deployment)
 - Which APIs are you planning to use?: Select "Web API" and "Web Playback SDK"
 - Accept the terms and click "Save"
@@ -88,20 +88,38 @@ Run:
 npm install
 ```
 
-**Step 3: Verify it works**
+**Step 3: Install HTTPS plugin for local dev**
+
+Run:
+```bash
+npm install -D @vitejs/plugin-basic-ssl
+```
+
+Then update `vite.config.ts` to include the plugin:
+```typescript
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import basicSsl from '@vitejs/plugin-basic-ssl'
+
+export default defineConfig({
+  plugins: [react(), basicSsl()],
+})
+```
+
+**Step 5: Verify it works**
 
 Run:
 ```bash
 npm run dev
 ```
 
-Expected: Dev server starts at http://localhost:5173, shows Vite + React page
+Expected: Dev server starts at https://localhost:5173 (accept the self-signed cert warning), shows Vite + React page
 
-**Step 4: Stop the dev server**
+**Step 6: Stop the dev server**
 
 Press `Ctrl+C`
 
-**Step 5: Commit**
+**Step 7: Commit**
 
 ```bash
 git add -A
@@ -262,7 +280,7 @@ git commit -m "feat: add shadcn/ui with button component"
 Create `.env.example`:
 ```
 VITE_SPOTIFY_CLIENT_ID=your_client_id_here
-VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173/callback
+VITE_SPOTIFY_REDIRECT_URI=https://localhost:5173/callback
 ```
 
 **Step 2: Create actual .env file**
@@ -270,7 +288,7 @@ VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173/callback
 Create `.env`:
 ```
 VITE_SPOTIFY_CLIENT_ID=<your actual client id from Spotify Dashboard>
-VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173/callback
+VITE_SPOTIFY_REDIRECT_URI=https://localhost:5173/callback
 ```
 
 **Step 3: Ensure .env is gitignored**
