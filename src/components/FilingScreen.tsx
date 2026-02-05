@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { toast } from 'sonner'
 import { NowPlaying } from '@/components/NowPlaying'
 import { PlaylistList } from '@/components/PlaylistList'
 import { NewPlaylistDialog } from '@/components/NewPlaylistDialog'
@@ -58,6 +59,9 @@ export function FilingScreen({ accessToken }: FilingScreenProps) {
     if (selectedPlaylistIds.size > 0) {
       data.removeFromUnfiled(currentSong.id)
       data.resortPlaylists()
+      toast('Song filed', {
+        description: `Added to ${selectedPlaylistIds.size} playlist(s)`,
+      })
     }
 
     // Reset selection and pick next song

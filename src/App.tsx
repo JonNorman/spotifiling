@@ -1,6 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { LoginPage } from '@/components/LoginPage'
 import { FilingScreen } from '@/components/FilingScreen'
+import { Toaster } from '@/components/ui/sonner'
 
 function App() {
   const { isAuthenticated, isPremium, user, logout, tokens } = useAuth()
@@ -36,6 +37,8 @@ function App() {
       <main>
         <FilingScreen accessToken={tokens!.accessToken} />
       </main>
+
+      <Toaster />
     </div>
   )
 }
