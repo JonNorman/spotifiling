@@ -37,7 +37,7 @@ export class SpotifyApi {
   async getAllLikedSongs(
     onProgress?: (loaded: number, total: number) => void
   ): Promise<SpotifyTrack[]> {
-    type PageType = SpotifyPaginated<{ track: SpotifyTrack }>
+    type PageType = SpotifyPaginated<{ added_at: string; track: SpotifyTrack }>
     const tracks: SpotifyTrack[] = []
     let url: string | null = `/me/tracks?limit=50`
     let total = 0
@@ -45,7 +45,7 @@ export class SpotifyApi {
     while (url) {
       const page: PageType = await this.fetch<PageType>(url)
       total = page.total
-      tracks.push(...page.items.map((i) => i.track))
+      tracks.push(...page.items.map((i) => ({ ...i.track, added_at: i.added_at })))
       onProgress?.(tracks.length, total)
       url = page.next ? page.next.replace('https://api.spotify.com/v1', '') : null
     }
@@ -115,5 +115,12 @@ export class SpotifyApi {
       '/me/tracks?limit=1&offset=0'
     )
     return result.total
+  }
+
+  // Remove a track from the user's saved tracks (unlike)
+  async unlikeSong(trackId: string): Promise<void> {
+    await this.fetch(`/me/tracks?ids=${trackId}`, {
+      method: 'DELETE',
+    })
   }
 }

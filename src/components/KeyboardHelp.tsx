@@ -16,6 +16,7 @@ const shortcuts = [
   { key: 'Enter', description: 'Next song' },
   { key: 'Space', description: 'Pause / Resume' },
   { key: 'N', description: 'New playlist' },
+  { key: 'U', description: 'Unlike song' },
   { key: 'Esc', description: 'Clear search' },
   { key: '?', description: 'Show this help' },
 ]
