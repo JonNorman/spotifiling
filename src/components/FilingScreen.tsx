@@ -157,7 +157,7 @@ export function FilingScreen({ accessToken }: FilingScreenProps) {
     : totalUnfiled
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6 px-2 sm:px-0">
       <NowPlaying
         track={currentSong}
         isPlaying={player.isPlaying}

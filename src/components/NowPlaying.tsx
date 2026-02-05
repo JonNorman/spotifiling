@@ -35,15 +35,15 @@ export function NowPlaying({
 
   return (
     <div className="bg-gray-800 rounded-lg p-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-col sm:flex-row">
         {albumArt && (
           <img
             src={albumArt}
             alt={track.album.name}
-            className="w-24 h-24 rounded shadow-lg"
+            className="w-32 h-32 sm:w-24 sm:h-24 rounded shadow-lg"
           />
         )}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 text-center sm:text-left">
           <h2 className="text-xl font-semibold truncate">{track.name}</h2>
           <p className="text-gray-400 truncate">
             {track.artists.map((a) => a.name).join(', ')}

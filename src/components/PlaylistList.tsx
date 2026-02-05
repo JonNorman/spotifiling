@@ -81,7 +81,7 @@ export function PlaylistList({
         />
       </div>
 
-      <div className="space-y-2 max-h-80 overflow-y-auto">
+      <div className="space-y-2 max-h-60 sm:max-h-80 overflow-y-auto">
         {filteredPlaylists.map((playlist, index) => (
           <label
             key={playlist.id}
