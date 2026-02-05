@@ -37,26 +37,17 @@ export class SpotifyApi {
   async getAllLikedSongs(
     onProgress?: (loaded: number, total: number) => void
   ): Promise<SpotifyTrack[]> {
+    type PageType = SpotifyPaginated<{ track: SpotifyTrack }>
     const tracks: SpotifyTrack[] = []
-    let offset = 0
-    const limit = 50
+    let url: string | null = `/me/tracks?limit=50`
+    let total = 0
 
-    // First request to get total
-    const first = await this.fetch<SpotifyPaginated<{ track: SpotifyTrack }>>(
-      `/me/tracks?limit=${limit}&offset=0`
-    )
-
-    tracks.push(...first.items.map((i) => i.track))
-    onProgress?.(tracks.length, first.total)
-
-    // Fetch remaining pages
-    while (tracks.length < first.total) {
-      offset += limit
-      const page = await this.fetch<SpotifyPaginated<{ track: SpotifyTrack }>>(
-        `/me/tracks?limit=${limit}&offset=${offset}`
-      )
+    while (url) {
+      const page: PageType = await this.fetch<PageType>(url)
+      total = page.total
       tracks.push(...page.items.map((i) => i.track))
-      onProgress?.(tracks.length, first.total)
+      onProgress?.(tracks.length, total)
+      url = page.next ? page.next.replace('https://api.spotify.com/v1', '') : null
     }
 
     return tracks
@@ -64,21 +55,14 @@ export class SpotifyApi {
 
   // Get all user playlists (handles pagination)
   async getAllPlaylists(): Promise<SpotifyPlaylist[]> {
+    type PageType = SpotifyPaginated<SpotifyPlaylist>
     const playlists: SpotifyPlaylist[] = []
-    let offset = 0
-    const limit = 50
+    let url: string | null = `/me/playlists?limit=50`
 
-    const first = await this.fetch<SpotifyPaginated<SpotifyPlaylist>>(
-      `/me/playlists?limit=${limit}&offset=0`
-    )
-    playlists.push(...first.items)
-
-    while (playlists.length < first.total) {
-      offset += limit
-      const page = await this.fetch<SpotifyPaginated<SpotifyPlaylist>>(
-        `/me/playlists?limit=${limit}&offset=${offset}`
-      )
+    while (url) {
+      const page: PageType = await this.fetch<PageType>(url)
       playlists.push(...page.items)
+      url = page.next ? page.next.replace('https://api.spotify.com/v1', '') : null
     }
 
     return playlists
@@ -86,21 +70,14 @@ export class SpotifyApi {
 
   // Get tracks in a playlist
   async getPlaylistTracks(playlistId: string): Promise<string[]> {
+    type PageType = SpotifyPaginated<{ track: SpotifyTrack | null }>
     const trackIds: string[] = []
-    let offset = 0
-    const limit = 100
+    let url: string | null = `/playlists/${playlistId}/tracks?limit=100&fields=items(track(id)),total,next`
 
-    const first = await this.fetch<SpotifyPaginated<{ track: SpotifyTrack | null }>>(
-      `/playlists/${playlistId}/tracks?limit=${limit}&offset=0&fields=items(track(id)),total`
-    )
-    trackIds.push(...first.items.filter((i) => i.track).map((i) => i.track!.id))
-
-    while (trackIds.length < first.total) {
-      offset += limit
-      const page = await this.fetch<SpotifyPaginated<{ track: SpotifyTrack | null }>>(
-        `/playlists/${playlistId}/tracks?limit=${limit}&offset=${offset}&fields=items(track(id)),total`
-      )
+    while (url) {
+      const page: PageType = await this.fetch<PageType>(url)
       trackIds.push(...page.items.filter((i) => i.track).map((i) => i.track!.id))
+      url = page.next ? page.next.replace('https://api.spotify.com/v1', '') : null
     }
 
     return trackIds
