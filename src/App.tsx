@@ -25,14 +25,14 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
-      <header className="flex justify-between items-center mb-6 sm:mb-8 max-w-2xl mx-auto px-2 sm:px-0">
+      <header className="flex items-center mb-6 sm:mb-8 max-w-2xl mx-auto px-2 sm:px-0">
         <h1 className="text-xl sm:text-2xl font-bold">Spotifiling</h1>
-        <img src="/logo-header.png" alt="Spotifiling logo" className="w-10 h-10 sm:w-12 sm:h-12" />
-        <div className="flex items-center gap-2 sm:gap-4">
-          <span className="text-gray-400 text-sm sm:text-base hidden sm:inline">{user?.display_name}</span>
+        <img src="/logo-header.png" alt="Spotifiling logo" className="w-10 h-10 sm:w-12 sm:h-12 mx-auto" />
+        <div className="flex flex-col items-end gap-1">
           <Button onClick={logout} size="sm" className="bg-gray-700 text-white hover:bg-gray-600">
             Log out
           </Button>
+          <span className="text-gray-400 text-xs">{user?.display_name}</span>
         </div>
       </header>
 

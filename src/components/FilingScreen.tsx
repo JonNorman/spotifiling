@@ -267,6 +267,7 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
           <Checkbox
             checked={autoPlay}
             onCheckedChange={(checked) => setAutoPlay(checked === true)}
+            className="border-gray-500 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
           <span className="text-sm text-gray-400">Auto-play</span>
         </label>
