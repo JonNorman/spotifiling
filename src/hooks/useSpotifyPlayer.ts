@@ -149,24 +149,32 @@ export function useSpotifyPlayer(accessToken: string | null) {
 
       // Device not yet active — transfer playback to it first, then retry
       if (response.status === 404) {
-        await fetch('https://api.spotify.com/v1/me/player', {
+        const transferRes = await fetch('https://api.spotify.com/v1/me/player', {
           method: 'PUT',
           headers,
           body: JSON.stringify({ device_ids: [deviceId] }),
         })
-        await new Promise((r) => setTimeout(r, 500))
 
-        response = await fetch(
-          `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
-          {
-            method: 'PUT',
-            headers,
-            body: JSON.stringify({
-              uris: [track.uri],
-              position_ms: startPosition,
-            }),
-          }
-        )
+        if (!transferRes.ok) {
+          console.error('[Spotifiling] transfer playback failed:', transferRes.status)
+        }
+
+        // Retry with increasing delays until device is active
+        for (const delay of [500, 1000, 2000]) {
+          await new Promise((r) => setTimeout(r, delay))
+          response = await fetch(
+            `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+            {
+              method: 'PUT',
+              headers,
+              body: JSON.stringify({
+                uris: [track.uri],
+                position_ms: startPosition,
+              }),
+            }
+          )
+          if (response.status !== 404) break
+        }
       }
 
       if (!response.ok) {
