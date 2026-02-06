@@ -6,7 +6,6 @@ export interface SpotifyTokens {
 export interface SpotifyUser {
   id: string
   display_name: string | null
-  email: string
   images: { url: string }[]
   product: 'premium' | 'free' | 'open'
 }
