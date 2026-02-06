@@ -196,11 +196,16 @@ export function useSpotifyPlayer(accessToken: string | null) {
     await playerRef.current?.resume()
   }, [])
 
+  const seek = useCallback(async (positionMs: number) => {
+    await playerRef.current?.seek(positionMs)
+  }, [])
+
   return {
     ...state,
     play,
     togglePlay,
     pause,
     resume,
+    seek,
   }
 }

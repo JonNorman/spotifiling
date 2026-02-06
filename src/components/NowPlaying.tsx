@@ -1,3 +1,4 @@
+import { useRef, useCallback } from 'react'
 import type { SpotifyTrack } from '@/lib/spotify/types'
 
 interface NowPlayingProps {
@@ -7,6 +8,7 @@ interface NowPlayingProps {
   duration: number
   existingPlaylists: string[] // Names of playlists track is already in
   onTogglePlay: () => void
+  onSeek: (positionMs: number) => void
 }
 
 function formatTime(ms: number): string {
@@ -32,7 +34,19 @@ export function NowPlaying({
   duration,
   existingPlaylists,
   onTogglePlay,
+  onSeek,
 }: NowPlayingProps) {
+  const barRef = useRef<HTMLDivElement>(null)
+
+  const seekToPosition = useCallback(
+    (clientX: number) => {
+      if (!barRef.current || duration === 0) return
+      const rect = barRef.current.getBoundingClientRect()
+      const fraction = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+      onSeek(Math.floor(fraction * duration))
+    },
+    [duration, onSeek]
+  )
   if (!track) {
     return (
       <div className="bg-gray-800 rounded-lg p-6 text-center">
@@ -91,10 +105,21 @@ export function NowPlaying({
             )}
           </button>
 
-          <div className="flex-1">
-            <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+          <div
+            ref={barRef}
+            className="flex-1 group cursor-pointer py-2"
+            onClick={(e) => seekToPosition(e.clientX)}
+            onPointerDown={(e) => {
+              (e.target as HTMLElement).setPointerCapture(e.pointerId)
+              seekToPosition(e.clientX)
+            }}
+            onPointerMove={(e) => {
+              if (e.buttons > 0) seekToPosition(e.clientX)
+            }}
+          >
+            <div className="h-1 group-hover:h-2 bg-gray-700 rounded-full overflow-hidden transition-all">
               <div
-                className="h-full bg-green-500 transition-all duration-1000"
+                className="h-full bg-green-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
