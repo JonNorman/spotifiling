@@ -1,6 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { LoginPage } from '@/components/LoginPage'
 import { FilingScreen } from '@/components/FilingScreen'
+import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
 
 function App() {
@@ -15,9 +16,9 @@ function App() {
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center flex-col gap-4">
         <h1 className="text-2xl font-bold">Premium Required</h1>
         <p className="text-gray-400">Spotifiling requires Spotify Premium for playback.</p>
-        <button onClick={logout} className="text-blue-400 underline">
+        <Button onClick={logout} size="sm" className="bg-gray-700 text-white hover:bg-gray-600">
           Log out
-        </button>
+        </Button>
       </div>
     )
   }
@@ -29,9 +30,9 @@ function App() {
         <img src="/logo-header.png" alt="Spotifiling logo" className="w-10 h-10 sm:w-12 sm:h-12" />
         <div className="flex items-center gap-2 sm:gap-4">
           <span className="text-gray-400 text-sm sm:text-base hidden sm:inline">{user?.display_name}</span>
-          <button onClick={logout} className="text-blue-400 underline text-sm">
+          <Button onClick={logout} size="sm" className="bg-gray-700 text-white hover:bg-gray-600">
             Log out
-          </button>
+          </Button>
         </div>
       </header>
 
