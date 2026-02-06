@@ -124,8 +124,8 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
       const api = new SpotifyApi(accessToken)
       await api.unlikeSong(currentSong.id)
 
-      // Remove from unfiled and pick next song
-      data.removeFromUnfiled(currentSong.id)
+      // Remove from liked songs (and unfiled) and pick next song
+      data.removeFromLiked(currentSong.id)
       setSelectedPlaylistIds(new Set())
       const nextSong = pickRandomSong(
         data.unfiledSongs.filter((s) => s.id !== currentSong.id)

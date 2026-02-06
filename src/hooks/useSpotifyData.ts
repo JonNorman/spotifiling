@@ -165,6 +165,14 @@ export function useSpotifyData(accessToken: string | null, userId: string | null
     }))
   }, [])
 
+  const removeFromLiked = useCallback((trackId: string) => {
+    setState((s) => ({
+      ...s,
+      likedSongs: s.likedSongs.filter((t) => t.id !== trackId),
+      unfiledSongs: s.unfiledSongs.filter((t) => t.id !== trackId),
+    }))
+  }, [])
+
   const resortPlaylists = useCallback(() => {
     const filingCounts = getFilingCounts()
     setState((s) => ({
@@ -188,6 +196,7 @@ export function useSpotifyData(accessToken: string | null, userId: string | null
   return {
     ...state,
     removeFromUnfiled,
+    removeFromLiked,
     resortPlaylists,
     addPlaylist,
     reload: loadData,

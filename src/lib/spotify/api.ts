@@ -148,9 +148,17 @@ export class SpotifyApi {
   }
 
   // Remove a track from the user's saved tracks (unlike)
+  // DELETE returns 200 with no body — skip this.fetch() to avoid parsing
   async unlikeSong(trackId: string): Promise<void> {
-    await this.fetch(`/me/tracks?ids=${trackId}`, {
-      method: 'DELETE',
-    })
+    const response = await fetch(
+      `https://api.spotify.com/v1/me/tracks?ids=${trackId}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${this.accessToken}` },
+      }
+    )
+    if (!response.ok) {
+      throw new Error(`Spotify API error ${response.status}`)
+    }
   }
 }
