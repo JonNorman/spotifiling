@@ -96,6 +96,15 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
     setSelectedPlaylistIds((prev) => new Set([...prev, playlist.id]))
   }, [accessToken, data])
 
+  // Toggle play - start playback if no active session, otherwise toggle
+  const handleTogglePlay = useCallback(() => {
+    if (currentSong && !player.isPlaying && player.duration === 0) {
+      player.play(currentSong)
+    } else {
+      player.togglePlay()
+    }
+  }, [currentSong, player])
+
   // Unlike current song
   const handleUnlike = useCallback(async () => {
     if (!currentSong) return
@@ -134,7 +143,7 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
 
       if (e.key === ' ') {
         e.preventDefault()
-        player.togglePlay()
+        handleTogglePlay()
         return
       }
 
@@ -153,7 +162,7 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleNext, handleUnlike, player])
+  }, [handleNext, handleUnlike, handleTogglePlay, player])
 
   // Loading state
   if (data.isLoading) {
@@ -244,7 +253,7 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
         position={player.position}
         duration={player.duration}
         existingPlaylists={existingPlaylistNames}
-        onTogglePlay={player.togglePlay}
+        onTogglePlay={handleTogglePlay}
       />
 
       <p className="text-center text-gray-400">
