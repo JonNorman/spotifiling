@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { toast } from 'sonner'
 import type { SpotifyPlayer, SpotifyPlaybackState, SpotifyTrack } from '@/lib/spotify/types'
 
 interface PlayerState {
@@ -64,6 +65,7 @@ export function useSpotifyPlayer(accessToken: string | null) {
         const { message } = state as { message: string }
         if (isMounted) {
           setState((s) => ({ ...s, error: `Init error: ${message}` }))
+          toast.error('Player initialization failed', { description: message })
         }
       })
 
@@ -71,6 +73,7 @@ export function useSpotifyPlayer(accessToken: string | null) {
         const { message } = state as { message: string }
         if (isMounted) {
           setState((s) => ({ ...s, error: `Auth error: ${message}` }))
+          toast.error('Player authentication failed', { description: message })
         }
       })
 
@@ -78,6 +81,7 @@ export function useSpotifyPlayer(accessToken: string | null) {
         const { message } = state as { message: string }
         if (isMounted) {
           setState((s) => ({ ...s, error: `Playback error: ${message}` }))
+          toast.error('Playback error', { description: message })
         }
       })
 
@@ -113,22 +117,46 @@ export function useSpotifyPlayer(accessToken: string | null) {
   }, [state.isPlaying])
 
   const play = useCallback(async (track: SpotifyTrack) => {
-    if (!deviceIdRef.current || !accessToken) return
+    if (!deviceIdRef.current || !accessToken) {
+      console.warn('[Spotifiling] play() skipped: no device or token', {
+        hasDevice: !!deviceIdRef.current,
+        hasToken: !!accessToken,
+      })
+      return
+    }
 
     // Start playback at 30% into the track
     const startPosition = Math.floor(track.duration_ms * 0.3)
 
-    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceIdRef.current}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        uris: [track.uri],
-        position_ms: startPosition,
-      }),
-    })
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/player/play?device_id=${deviceIdRef.current}`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uris: [track.uri],
+            position_ms: startPosition,
+          }),
+        }
+      )
+
+      if (!response.ok) {
+        const body = await response.text()
+        console.error('[Spotifiling] play() API error:', response.status, body)
+        const msg = `Playback failed (${response.status})`
+        setState((s) => ({ ...s, error: msg }))
+        toast.error(msg)
+      }
+    } catch (err) {
+      console.error('[Spotifiling] play() network error:', err)
+      const msg = err instanceof Error ? err.message : 'Playback failed'
+      setState((s) => ({ ...s, error: msg }))
+      toast.error(msg)
+    }
   }, [accessToken])
 
   const togglePlay = useCallback(async () => {
