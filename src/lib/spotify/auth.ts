@@ -84,5 +84,5 @@ export function getAuthCodeFromUrl(): string | null {
 export function clearAuthCodeFromUrl(): void {
   const url = new URL(window.location.href)
   url.searchParams.delete('code')
-  window.history.replaceState({}, '', url.pathname)
+  window.history.replaceState({}, '', '/')
 }
