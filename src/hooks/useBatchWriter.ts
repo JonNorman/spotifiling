@@ -21,7 +21,7 @@ interface BatchWriterState {
 const FLUSH_INTERVAL_MS = 10_000
 const FLUSH_THRESHOLD = 20
 
-export function useBatchWriter(accessToken: string | null) {
+export function useBatchWriter(accessToken: string | null, onFlush?: (playlistIds: string[]) => void) {
   const [state, setState] = useState<BatchWriterState>({
     pendingCount: getPendingWrites().length,
     isFlushing: false,
@@ -68,6 +68,8 @@ export function useBatchWriter(accessToken: string | null) {
     // Remove successful writes from pending
     if (successfulWrites.length > 0) {
       removePendingWrites(successfulWrites)
+      const flushedIds = [...new Set(successfulWrites.map((w) => w.playlistId))]
+      onFlush?.(flushedIds)
     }
 
     flushingRef.current = false
@@ -76,7 +78,7 @@ export function useBatchWriter(accessToken: string | null) {
       isFlushing: false,
       lastError,
     })
-  }, [accessToken])
+  }, [accessToken, onFlush])
 
   // Queue a write
   const queueWrite = useCallback((trackUri: string, playlistId: string) => {

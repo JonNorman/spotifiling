@@ -27,7 +27,10 @@ function pickRandomSong(songs: SpotifyTrack[]): SpotifyTrack | null {
 export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
   const data = useSpotifyData(accessToken, userId)
   const player = useSpotifyPlayer(accessToken)
-  const writer = useBatchWriter(accessToken)
+  const [flushedPlaylistIds, setFlushedPlaylistIds] = useState<Set<string>>(new Set())
+  const writer = useBatchWriter(accessToken, (playlistIds) => {
+    setFlushedPlaylistIds(new Set(playlistIds))
+  })
 
   const [currentSong, setCurrentSong] = useState<SpotifyTrack | null>(null)
   const [selectedPlaylistIds, setSelectedPlaylistIds] = useState<Set<string>>(new Set())
@@ -285,6 +288,9 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
         onToggle={handleTogglePlaylist}
         onCreateNew={() => setShowNewPlaylist(true)}
         searchFocusKey="/"
+        accessToken={accessToken}
+        likedSongs={data.likedSongs}
+        flushedPlaylistIds={flushedPlaylistIds}
       />
 
       <div className="flex items-center justify-between">

@@ -83,6 +83,29 @@ export class SpotifyApi {
     return trackIds
   }
 
+  // Get track details (name + artists) for a playlist
+  async getPlaylistTrackDetails(playlistId: string): Promise<{ name: string; artists: string }[]> {
+    type Item = { track: { name: string; artists: { name: string }[] } | null }
+    type PageType = SpotifyPaginated<Item>
+    const tracks: { name: string; artists: string }[] = []
+    let url: string | null = `/playlists/${playlistId}/tracks?limit=100&fields=items(track(name,artists(name))),next`
+
+    while (url) {
+      const page: PageType = await this.fetch<PageType>(url)
+      for (const item of page.items) {
+        if (item.track) {
+          tracks.push({
+            name: item.track.name,
+            artists: item.track.artists.map((a) => a.name).join(', '),
+          })
+        }
+      }
+      url = page.next ? page.next.replace('https://api.spotify.com/v1', '') : null
+    }
+
+    return tracks
+  }
+
   // Add tracks to a playlist
   async addTracksToPlaylist(playlistId: string, trackUris: string[]): Promise<void> {
     await this.fetch(`/playlists/${playlistId}/tracks`, {
