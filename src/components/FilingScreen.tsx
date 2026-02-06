@@ -5,6 +5,7 @@ import { PlaylistList } from '@/components/PlaylistList'
 import { NewPlaylistDialog } from '@/components/NewPlaylistDialog'
 import { KeyboardHelp } from '@/components/KeyboardHelp'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { useSpotifyData } from '@/hooks/useSpotifyData'
 import { useSpotifyPlayer } from '@/hooks/useSpotifyPlayer'
@@ -32,6 +33,7 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
   const [selectedPlaylistIds, setSelectedPlaylistIds] = useState<Set<string>>(new Set())
   const [showNewPlaylist, setShowNewPlaylist] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  const [autoPlay, setAutoPlay] = useState(false)
 
   // Pick initial song when data loads
   useEffect(() => {
@@ -41,12 +43,12 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
     }
   }, [data.isLoading, data.unfiledSongs, currentSong])
 
-  // Play song when it changes
+  // Auto-play song when it changes (if enabled)
   useEffect(() => {
-    if (currentSong && player.isReady) {
+    if (autoPlay && currentSong && player.isReady) {
       player.play(currentSong)
     }
-  }, [currentSong, player.isReady, player.play])
+  }, [autoPlay, currentSong, player.isReady, player.play])
 
   // Handle next song
   const handleNext = useCallback(() => {
@@ -254,11 +256,21 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
         duration={player.duration}
         existingPlaylists={existingPlaylistNames}
         onTogglePlay={handleTogglePlay}
+        onSeek={player.seek}
       />
 
-      <p className="text-center text-gray-400">
-        {remaining} of {totalUnfiled} unfiled songs remaining
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-gray-400">
+          {remaining} of {totalUnfiled} unfiled songs remaining
+        </p>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <Checkbox
+            checked={autoPlay}
+            onCheckedChange={(checked) => setAutoPlay(checked === true)}
+          />
+          <span className="text-sm text-gray-400">Auto-play</span>
+        </label>
+      </div>
 
       <PlaylistList
         playlists={sortedPlaylists}
