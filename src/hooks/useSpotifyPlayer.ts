@@ -125,24 +125,49 @@ export function useSpotifyPlayer(accessToken: string | null) {
       return
     }
 
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    }
+    const deviceId = deviceIdRef.current
+
     // Start playback at 30% into the track
     const startPosition = Math.floor(track.duration_ms * 0.3)
 
     try {
-      const response = await fetch(
-        `https://api.spotify.com/v1/me/player/play?device_id=${deviceIdRef.current}`,
+      let response = await fetch(
+        `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
         {
           method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
+          headers,
           body: JSON.stringify({
             uris: [track.uri],
             position_ms: startPosition,
           }),
         }
       )
+
+      // Device not yet active — transfer playback to it first, then retry
+      if (response.status === 404) {
+        await fetch('https://api.spotify.com/v1/me/player', {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ device_ids: [deviceId] }),
+        })
+        await new Promise((r) => setTimeout(r, 500))
+
+        response = await fetch(
+          `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+          {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify({
+              uris: [track.uri],
+              position_ms: startPosition,
+            }),
+          }
+        )
+      }
 
       if (!response.ok) {
         const body = await response.text()
