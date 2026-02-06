@@ -54,6 +54,9 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
   const handleNext = useCallback(() => {
     if (!currentSong) return
 
+    // Stop playback of current song
+    player.pause()
+
     // Queue writes for selected playlists
     for (const playlistId of selectedPlaylistIds) {
       writer.queueWrite(currentSong.uri, playlistId)
@@ -74,7 +77,7 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
       data.unfiledSongs.filter((s) => s.id !== currentSong.id)
     )
     setCurrentSong(nextSong)
-  }, [currentSong, selectedPlaylistIds, data, writer])
+  }, [currentSong, selectedPlaylistIds, data, writer, player])
 
   // Toggle playlist selection
   const handleTogglePlaylist = useCallback((playlistId: string) => {
@@ -111,6 +114,9 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
   const handleUnlike = useCallback(async () => {
     if (!currentSong) return
 
+    // Stop playback of current song
+    player.pause()
+
     try {
       const api = new SpotifyApi(accessToken)
       await api.unlikeSong(currentSong.id)
@@ -129,7 +135,7 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
     } catch {
       toast.error('Failed to unlike song')
     }
-  }, [currentSong, accessToken, data])
+  }, [currentSong, accessToken, data, player])
 
   // Global keyboard shortcuts
   useEffect(() => {
