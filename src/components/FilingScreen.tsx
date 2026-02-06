@@ -279,10 +279,10 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
           )}
         </div>
         <div className="flex gap-2">
-          <Button onClick={handleUnlike} variant="outline" size="lg">
+          <Button onClick={handleUnlike} size="lg" className="bg-gray-700 text-white hover:bg-gray-600">
             Unlike (U)
           </Button>
-          <Button onClick={handleNext} size="lg">
+          <Button onClick={handleNext} size="lg" className="bg-green-600 text-white hover:bg-green-500">
             Next (Enter)
           </Button>
         </div>
