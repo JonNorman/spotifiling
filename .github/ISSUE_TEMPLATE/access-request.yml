@@ -1,0 +1,25 @@
+name: Request Access
+description: Request to be added to the Spotifiling allow-list
+title: "Access request"
+labels: ["access-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Due to Spotify's API access restrictions, your Spotify account must be explicitly added to the app's allow-list before you can use Spotifiling. Please provide the details below so we can add you.
+  - type: input
+    id: full-name
+    attributes:
+      label: Full name
+      description: Your full name as it appears on your Spotify account.
+      placeholder: e.g. Jane Smith
+    validations:
+      required: true
+  - type: input
+    id: email
+    attributes:
+      label: Email address
+      description: The email address associated with your Spotify account.
+      placeholder: e.g. jane@example.com
+    validations:
+      required: true

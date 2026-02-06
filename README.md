@@ -1,5 +1,7 @@
 # Spotifiling
 
+> **Note:** Due to Spotify's recent API access restrictions, this app will only work for users whose Spotify accounts have been explicitly added to the allow-list of the Spotify Developer application powering this service. If you'd like access, please [open an access request issue](../../issues/new?template=access-request.yml).
+
 A web app to organize your Spotify library by finding "unfiled" liked songs and making it easy to add them to playlists.
 
 ## What It Does
