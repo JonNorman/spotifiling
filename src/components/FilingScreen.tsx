@@ -224,10 +224,9 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
     )
   }
 
-  const totalUnfiled = data.unfiledSongs.length
-  const remaining = currentSong
-    ? data.unfiledSongs.filter((s) => s.id !== currentSong.id).length + 1
-    : totalUnfiled
+  const totalLiked = data.likedSongs.length
+  const unfiled = data.unfiledSongs.length
+  const filedPercent = totalLiked > 0 ? Math.round(((totalLiked - unfiled) / totalLiked) * 100) : 100
 
   // Find playlists the current song is already in
   const existingPlaylistIds = new Set<string>()
@@ -267,7 +266,7 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
 
       <div className="flex items-center justify-between">
         <p className="text-gray-400">
-          {remaining} of {totalUnfiled} unfiled songs remaining
+          {unfiled} of {totalLiked} liked songs unfiled ({filedPercent}% filed)
         </p>
         <label className="flex items-center gap-2 cursor-pointer">
           <Checkbox
