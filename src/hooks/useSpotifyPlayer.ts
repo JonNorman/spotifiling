@@ -73,7 +73,7 @@ export function useSpotifyPlayer(accessToken: string | null) {
         const { message } = state as { message: string }
         if (isMounted) {
           setState((s) => ({ ...s, error: `Auth error: ${message}` }))
-          toast.error('Player authentication failed', { description: message })
+          toast.error('Player authentication failed — try logging out and back in', { description: message })
         }
       })
 
