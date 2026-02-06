@@ -14,6 +14,7 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center flex-col gap-6">
+      <img src="/logo-header.png" alt="Spotifiling logo" className="w-24 h-24" />
       <h1 className="text-4xl font-bold">Spotifiling</h1>
       <p className="text-gray-400 max-w-md text-center">
         Organize your Spotify library by finding unfiled liked songs and adding them to playlists.
