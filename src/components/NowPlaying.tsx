@@ -59,11 +59,10 @@ export function NowPlaying({
           <p className="text-gray-400 truncate">
             {track.artists.map((a) => a.name).join(', ')}
           </p>
-          {track.added_at && (
-            <p className="text-gray-500 text-sm mt-1">
-              Added {formatDate(track.added_at)}
-            </p>
-          )}
+          <p className="text-gray-500 text-sm truncate mt-1">
+            {track.album.name} &middot; {formatTime(track.duration_ms)}
+            {track.added_at && <> &middot; Liked {formatDate(track.added_at)}</>}
+          </p>
           {existingPlaylists.length > 0 && (
             <p className="text-gray-500 text-sm mt-1">
               Already in: {existingPlaylists.slice(0, 3).join(', ')}
