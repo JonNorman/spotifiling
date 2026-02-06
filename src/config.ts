@@ -4,10 +4,13 @@ export const config = {
     redirectUri: import.meta.env.VITE_SPOTIFY_REDIRECT_URI as string,
     scopes: [
       'user-library-read',
+      'user-library-modify',
       'playlist-read-private',
       'playlist-modify-private',
       'playlist-modify-public',
       'streaming',
+      'user-read-playback-state',
+      'user-modify-playback-state',
       'user-read-email',
       'user-read-private',
     ],
