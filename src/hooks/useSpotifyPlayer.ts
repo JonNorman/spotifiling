@@ -180,9 +180,16 @@ export function useSpotifyPlayer(accessToken: string | null) {
       if (!response.ok) {
         const body = await response.text()
         console.error('[Spotifiling] play() API error:', response.status, body)
+        let detail = ''
+        try {
+          const parsed = JSON.parse(body)
+          detail = parsed?.error?.message || ''
+        } catch {
+          detail = body.slice(0, 200)
+        }
         const msg = `Playback failed (${response.status})`
         setState((s) => ({ ...s, error: msg }))
-        toast.error(msg)
+        toast.error(msg, { description: detail || undefined })
       }
     } catch (err) {
       console.error('[Spotifiling] play() network error:', err)

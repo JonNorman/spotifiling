@@ -39,6 +39,7 @@ export function PlaylistList({
   const inputRef = useRef<HTMLInputElement>(null)
   const trackCacheRef = useRef<Map<string, TrackDetail[]>>(new Map())
   const [loadingPlaylistId, setLoadingPlaylistId] = useState<string | null>(null)
+  const [errorPlaylistId, setErrorPlaylistId] = useState<string | null>(null)
   const [, forceUpdate] = useState(0)
 
   const filteredPlaylists = useMemo(() => {
@@ -76,12 +77,13 @@ export function PlaylistList({
     if (trackCacheRef.current.has(playlistId)) return
 
     setLoadingPlaylistId(playlistId)
+    setErrorPlaylistId(null)
     try {
       const api = new SpotifyApi(accessToken)
       const tracks = await api.getPlaylistTrackDetails(playlistId)
       trackCacheRef.current.set(playlistId, tracks)
     } catch {
-      // Show empty state on error
+      setErrorPlaylistId(playlistId)
     }
     setLoadingPlaylistId(null)
     forceUpdate((n) => n + 1)
@@ -226,7 +228,10 @@ export function PlaylistList({
                         <span className="text-gray-500"> — {track.artists}</span>
                       </div>
                     ))}
-                    {!isLoading && cachedTracks?.length === 0 && pendingTracks.length === 0 && (
+                    {!isLoading && errorPlaylistId === playlist.id && !cachedTracks && (
+                      <p className="text-red-400 text-sm text-center py-4">Failed to load tracks</p>
+                    )}
+                    {!isLoading && !errorPlaylistId && cachedTracks?.length === 0 && pendingTracks.length === 0 && (
                       <p className="text-gray-500 text-sm text-center py-4">Empty playlist</p>
                     )}
                   </div>

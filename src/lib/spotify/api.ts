@@ -22,7 +22,14 @@ export class SpotifyApi {
         const retryAfter = response.headers.get('Retry-After')
         throw new Error(`Rate limited. Retry after ${retryAfter}s`)
       }
-      throw new Error(`API error: ${response.status}`)
+      let detail = ''
+      try {
+        const body = await response.json()
+        detail = body?.error?.message || JSON.stringify(body)
+      } catch {
+        detail = await response.text().catch(() => '')
+      }
+      throw new Error(`Spotify API error ${response.status}${detail ? `: ${detail}` : ''}`)
     }
 
     // Handle 204 No Content

@@ -135,8 +135,10 @@ export function FilingScreen({ accessToken, userId }: FilingScreenProps) {
       toast('Song unliked', {
         description: `Removed "${currentSong.name}" from your library`,
       })
-    } catch {
-      toast.error('Failed to unlike song')
+    } catch (err) {
+      toast.error('Failed to unlike song', {
+        description: err instanceof Error ? err.message : 'Unknown error',
+      })
     }
   }, [currentSong, accessToken, data, player])
 

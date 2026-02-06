@@ -60,7 +60,14 @@ export async function exchangeCodeForTokens(code: string): Promise<SpotifyTokens
   })
 
   if (!response.ok) {
-    throw new Error('Failed to exchange code for tokens')
+    let detail = ''
+    try {
+      const body = await response.json()
+      detail = body?.error_description || body?.error || ''
+    } catch {
+      // ignore parse errors
+    }
+    throw new Error(`Token exchange failed (${response.status})${detail ? `: ${detail}` : ''}`)
   }
 
   const data = await response.json()

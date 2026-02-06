@@ -52,7 +52,7 @@ export function useSpotifyAuth() {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     if (!response.ok) {
-      throw new Error('Failed to fetch user profile')
+      throw new Error(`Failed to fetch user profile (${response.status})`)
     }
     return response.json()
   }, [])
