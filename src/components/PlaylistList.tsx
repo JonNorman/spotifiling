@@ -1,15 +1,27 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { ListMusic } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import type { SpotifyPlaylist } from '@/lib/spotify/types'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { SpotifyApi } from '@/lib/spotify/api'
+import { getPendingWrites } from '@/lib/cache'
+import type { SpotifyPlaylist, SpotifyTrack } from '@/lib/spotify/types'
+
+interface TrackDetail {
+  name: string
+  artists: string
+}
 
 interface PlaylistListProps {
   playlists: SpotifyPlaylist[]
   selectedIds: Set<string>
-  existingIds: Set<string> // Playlists the current track is already in
+  existingIds: Set<string>
   onToggle: (playlistId: string) => void
   onCreateNew: () => void
-  searchFocusKey: string // e.g., '/'
+  searchFocusKey: string
+  accessToken: string
+  likedSongs: SpotifyTrack[]
+  flushedPlaylistIds?: Set<string>
 }
 
 export function PlaylistList({
@@ -19,9 +31,15 @@ export function PlaylistList({
   onToggle,
   onCreateNew,
   searchFocusKey,
+  accessToken,
+  likedSongs,
+  flushedPlaylistIds,
 }: PlaylistListProps) {
   const [search, setSearch] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const trackCacheRef = useRef<Map<string, TrackDetail[]>>(new Map())
+  const [loadingPlaylistId, setLoadingPlaylistId] = useState<string | null>(null)
+  const [, forceUpdate] = useState(0)
 
   const filteredPlaylists = useMemo(() => {
     if (!search.trim()) return playlists
@@ -29,10 +47,67 @@ export function PlaylistList({
     return playlists.filter((p) => p.name.toLowerCase().includes(lower))
   }, [playlists, search])
 
+  // Invalidate cache for playlists that were just flushed
+  useEffect(() => {
+    if (flushedPlaylistIds && flushedPlaylistIds.size > 0) {
+      for (const id of flushedPlaylistIds) {
+        trackCacheRef.current.delete(id)
+      }
+    }
+  }, [flushedPlaylistIds])
+
+  // Pre-fetch track details for top 10 visible playlists
+  useEffect(() => {
+    const api = new SpotifyApi(accessToken)
+    const toFetch = playlists.slice(0, 10).filter((p) => !trackCacheRef.current.has(p.id))
+
+    for (const playlist of toFetch) {
+      api.getPlaylistTrackDetails(playlist.id).then((tracks) => {
+        trackCacheRef.current.set(playlist.id, tracks)
+      }).catch(() => {
+        // Silently fail pre-fetch
+      })
+    }
+  }, [playlists, accessToken])
+
+  // Fetch tracks for a playlist on popover open
+  const handlePopoverOpen = useCallback(async (playlistId: string, isOpen: boolean) => {
+    if (!isOpen) return
+    if (trackCacheRef.current.has(playlistId)) return
+
+    setLoadingPlaylistId(playlistId)
+    try {
+      const api = new SpotifyApi(accessToken)
+      const tracks = await api.getPlaylistTrackDetails(playlistId)
+      trackCacheRef.current.set(playlistId, tracks)
+    } catch {
+      // Show empty state on error
+    }
+    setLoadingPlaylistId(null)
+    forceUpdate((n) => n + 1)
+  }, [accessToken])
+
+  // Resolve pending writes for a playlist into track details
+  const getPendingTracksForPlaylist = useCallback((playlistId: string): TrackDetail[] => {
+    const writes = getPendingWrites()
+    const pendingUris = writes
+      .filter((w) => w.playlistId === playlistId)
+      .map((w) => w.trackUri)
+
+    if (pendingUris.length === 0) return []
+
+    const uriSet = new Set(pendingUris)
+    return likedSongs
+      .filter((s) => uriSet.has(s.uri))
+      .map((s) => ({
+        name: s.name,
+        artists: s.artists.map((a) => a.name).join(', '),
+      }))
+  }, [likedSongs])
+
   // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing in input
       if (e.target instanceof HTMLInputElement) {
         if (e.key === 'Escape') {
           setSearch('')
@@ -41,14 +116,12 @@ export function PlaylistList({
         return
       }
 
-      // Focus search
       if (e.key === searchFocusKey) {
         e.preventDefault()
         inputRef.current?.focus()
         return
       }
 
-      // Number keys 1-9 and 0 (for 10)
       if (e.key >= '0' && e.key <= '9') {
         const index = e.key === '0' ? 9 : parseInt(e.key) - 1
         const playlist = filteredPlaylists[index]
@@ -58,7 +131,6 @@ export function PlaylistList({
         return
       }
 
-      // N for new playlist
       if (e.key.toLowerCase() === 'n') {
         e.preventDefault()
         onCreateNew()
@@ -86,25 +158,81 @@ export function PlaylistList({
       <div className="space-y-2 max-h-60 sm:max-h-80 overflow-y-auto">
         {filteredPlaylists.map((playlist, index) => {
           const isExisting = existingIds.has(playlist.id)
+          const cachedTracks = trackCacheRef.current.get(playlist.id)
+          const pendingTracks = getPendingTracksForPlaylist(playlist.id)
+          const isLoading = loadingPlaylistId === playlist.id
+
           return (
-            <label
+            <div
               key={playlist.id}
-              className={`flex items-center gap-3 p-2 rounded hover:bg-gray-700 cursor-pointer ${
+              className={`flex items-center gap-3 p-2 rounded hover:bg-gray-700 ${
                 isExisting ? 'bg-gray-700/50' : ''
               }`}
             >
-              <Checkbox
-                checked={selectedIds.has(playlist.id)}
-                onCheckedChange={() => onToggle(playlist.id)}
-              />
-              <span className="text-gray-500 text-sm w-4">
-                {index < 10 ? (index + 1) % 10 : ''}
-              </span>
-              <span className="truncate flex-1">{playlist.name}</span>
+              <label className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer">
+                <Checkbox
+                  checked={selectedIds.has(playlist.id)}
+                  onCheckedChange={() => onToggle(playlist.id)}
+                />
+                <span className="text-gray-500 text-sm w-4">
+                  {index < 10 ? (index + 1) % 10 : ''}
+                </span>
+                <span className="truncate flex-1">{playlist.name}</span>
+              </label>
               {isExisting && (
                 <span className="text-xs text-green-500 shrink-0">already in</span>
               )}
-            </label>
+              <Popover onOpenChange={(open) => handlePopoverOpen(playlist.id, open)}>
+                <PopoverTrigger asChild>
+                  <button
+                    className="text-gray-500 hover:text-gray-300 shrink-0 p-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ListMusic className="w-4 h-4" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  side="left"
+                  align="start"
+                  className="w-80 bg-gray-800 border-gray-700 p-0"
+                >
+                  <div className="p-3 border-b border-gray-700">
+                    <p className="font-medium text-sm text-gray-200 truncate">{playlist.name}</p>
+                    <p className="text-xs text-gray-400">
+                      {playlist.tracks.total} tracks
+                    </p>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto p-2">
+                    {isLoading && !cachedTracks && (
+                      <p className="text-gray-500 text-sm text-center py-4">Loading...</p>
+                    )}
+                    {pendingTracks.length > 0 && (
+                      <>
+                        {pendingTracks.map((track, i) => (
+                          <div key={`pending-${i}`} className="px-2 py-1.5 text-sm">
+                            <span className="text-yellow-400">{track.name}</span>
+                            <span className="text-gray-500"> — {track.artists}</span>
+                            <span className="text-xs text-yellow-600 ml-1">(pending)</span>
+                          </div>
+                        ))}
+                        {cachedTracks && cachedTracks.length > 0 && (
+                          <div className="border-t border-gray-700 my-1" />
+                        )}
+                      </>
+                    )}
+                    {cachedTracks?.map((track, i) => (
+                      <div key={i} className="px-2 py-1.5 text-sm">
+                        <span className="text-gray-200">{track.name}</span>
+                        <span className="text-gray-500"> — {track.artists}</span>
+                      </div>
+                    ))}
+                    {!isLoading && cachedTracks?.length === 0 && pendingTracks.length === 0 && (
+                      <p className="text-gray-500 text-sm text-center py-4">Empty playlist</p>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           )
         })}
 
